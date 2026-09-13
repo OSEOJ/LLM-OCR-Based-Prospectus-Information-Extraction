@@ -66,3 +66,5 @@ Thumbs.db
 # --- 포트폴리오 공유용 ---
 # 회사명이 들어간 개인 공유용 문서. 공개 저장소에 올리지 않는다.
 PORTFOLIO.md
+PORTFOLIO.pdf
+.tools/
