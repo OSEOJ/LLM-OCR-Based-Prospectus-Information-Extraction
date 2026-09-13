@@ -1,4 +1,4 @@
-# termsheet2json
+# LLM-OCR Based Prospectus Information Extraction
 
 텀시트를 OCR과 LLM으로 읽어 **구조화된 JSON**으로 변환하는 파이프라인입니다.
 
