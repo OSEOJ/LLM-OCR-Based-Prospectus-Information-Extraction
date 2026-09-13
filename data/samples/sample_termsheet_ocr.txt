@@ -1,0 +1,17 @@
+TERM SHEET (SAMPLE - SYNTHETIC DATA)
+
+장외파생금융상품 거래확인서
+Bond Forward Transaction Confirmation
+
+거래상대방        : Sample Securities Co., Ltd.
+거래일            : 2024-05-13
+결제일            : 2024-08-13
+기초자산          : Sample Government Bond 24-1
+액면금액          : KRW 10,000,000,000
+선도가격          : 10,132.50
+포지션            : Buy
+결제방식          : Physical Settlement
+영업일 기준       : Seoul
+Business Day Conv : Modified Following
+
+본 문서는 파이프라인 점검용 합성 예시이며 실제 거래가 아닙니다.

@@ -1,0 +1,133 @@
+prompts:
+  bond_forward:
+    - version: "1.0"
+      description: "채권선도 상품 json 변환 최종 버전"
+      date: "2025-06-10"
+      template: |
+        You are responsible for extracting issuance information for various financial products from termsheets and converting them into JSON.
+        As a financial expert, read the information converted from the termsheet text and create a JSON file of issuance details for the product using a fixed schema.
+        Terminology may vary across termsheets; as a financial expert, group different terms that have the same meaning into a single standard term.
+        Use the provided JSON schema field names and value formats (including date formats) in the fixed order to extract and populate only the required information.
+
+        The following is the example schema and key descriptions for a bond-forward product:
+
+        ###///###///###///###///###///###///###///###///
+          "포지션"       : "B"
+          "액면통화"     : "KRW"
+          "역맨금액"     : "10000000000"
+          "기초자산"     : "KRC035LP5331"
+          "효력발생일"   : "20250519"
+          "만기일"       : "20270928"
+          "BDC"          : "F"
+          "영업일적용도시": "SE"
+          "정산방식"     : "P"
+          "채권유형"     : "FI"
+          "표면금리"     : "0"
+          "만기정산금액" : "5276190000"
+          "선도가격"     : "0.527619"
+          "결제통화"     : "KRW"
+        ###///###///###///###///###///###///###///###///
+
+        • 포지션: B(buy) or S(sell) -> currently only buy exists for bond-forward products  
+        • 액면통화 : notional currency  
+        • 역맨금액 : notional amount -> enter only digits like in the example, without commas  
+        • 기초자산 : underlying asset (ISIN) -> the bond’s underlying asset is fixed to one; distinguish between government bond and government strip  
+        • 효력발생일 : effective date (YYYYMMDD format)  
+        • 만기일 : maturity date, settlement date (YYYYMMDD format) -> extract this product’s maturity date, not the underlying asset’s; do not use the reference obligation’s Maturity Date. Extract exact number of given txt
+        • BDC : Business day Convention (F: Following, M: Modified Following, P: Preceding)  
+        • 영업일적용도시 : business day calendar city (SE: Seoul, NY: New York, LON: London, etc.)  
+        • 정산방식 : settlement method (P: Physical Delivery, C: Cash Settlement)  
+        • 채권유형 : bond type (FI: Fixed Interest) -> currently only fixed-rate bonds exist  
+        • 표면금리 : underlying coupon rate -> if underlying code is ACTB, mark as 0; if ACTM, input the coupon rate as a decimal (e.g., 2.34% -> 0.0234). Always extract the bond’s coupon rate; never output transaction fees.  
+        • 만기정산금액 : maturity settlement amount -> enter only digits like the notional amount, without commas  
+        • 선도가격 : maturity settlement amount divided by notional amount, calculate as in the example (e.g., 5,276,190,000 / 10,000,000,000 = 0.527619). You should very carefully compute this value, as it is crucial for the bond-forward product.
+        • 결제통화 : settlement currency
+
+        Use the attached text to find and populate the values, not to copy the example values.
+        This requires very high accuracy; read and understand the text as a financial expert and fill in the values meticulously.
+        All fields must be filled and values must be enclosed in quotes, without exception.
+        Compute the forward price using the exact formula given in the example.
+        Extract only the required values and output a single, complete JSON with no explanatory text.
+
+        IMPORTANT RULES:
+
+        For all numeric fields such as 역맨금액, 만기정산금액, and 선도가격:
+        - Extract the exact number of digits as they appear in the text, without performing any unit conversion or calculation.
+        - Do not attempt to convert units like '억원', '조', '만원' into numbers. Only extract the number that is explicitly written in Arabic numerals in the text.
+        - Never omit any digit or leading zero; the extracted number must exactly match the number in the text.
+        - Never infer, round, or recalculate the number. Only direct extraction is allowed.
+
+        For date fields such as 효력발생일 and 만기일:
+
+        - Extract the exact date string as written in the text.
+        - Do not add or subtract any days. Do not apply settlement conventions (such as T+1 or T+2). Simply copy the date shown in the text without adjustment.
+        - IMPORTANT: For 만기일, extract ONLY the maturity date of the product itself (i.e., this bond-forward product), not the maturity date of any underlying asset or reference obligation. 
+        - If multiple dates are mentioned, IGNORE any 기초자산 만기일, underlying maturity date, or reference obligation maturity date.
+        - Only extract the explicitly labeled 만기일, Final Maturity Date, Maturity Date of the Product, or equivalent term clearly referring to this product’s own maturity or settlement date.
+        - If in doubt, prefer a date labeled for the product itself, and NOT for any underlying component.
+        - Changing the date in any way or selecting the wrong date type will be considered a CRITICAL ERROR.
+
+        These rules must be followed strictly. Any deviation (such as adding days to dates or modifying numbers) will be considered a critical error.
+        
+        ## text:
+        {{text}}
+
+  bond_forward_kor:
+    - version: "1.0"
+      description: "채권선도 상품 json 변환 초기 버전"
+      date: "2025-06-04"
+      template: |
+        너는 다양한 금융 상품에 대한 발행정보를 텀쉿으로부터 추출해서 Json으로 변환하는 역할을 맡고 있어.
+        금융 전문가의 입장에서 텍스트로 변환된 텀쉿의 정보를 읽고 해당 상품의 발행정보에 대한 고정된 양식의 Json파일을 만들어줘.
+        텀쉿마다 json파일의 고정된 필드에 해당하는 값을 표현하는 용어가 다를 수 있으니, 금융 전문가의 입장에서 같은 것을 의미하지만 다르게 표현되는
+        용어들을 묶어 하나의 용어로 통일해줘.
+        내가 제공하는 json 양식의 필드명이랑 값의 양식(날짜 표현 등)을 통일하고 순서를 고정해서 해당 정보만 꺼내서 채워주면 돼.
+        
+        다음은 채권 선도 상품의 출력으로 뽑아야 하는 json 파일의 예시 필드 양식과 키 값에 대한 설명이야:
+        
+        ###///###///###///###///###///###///###///###///
+          "포지션" : "B"
+          "액면통화" : "KRW"
+          "역맨금액" : "10000000000"
+          "기초자산" : "KRC035LP5331"
+          "효력발생일" : "20250519"
+          "만기일" : "20270928"
+          "BDC" : "F"
+          "영업일적용여부" : "U"
+          "영업일적용도시" : "SE"
+          "정산방식" : "P"
+          "채권유형" : "FI"
+          "표면금리" : "0"
+          "만기정산금액" : "5276190000"
+          "선도가격" : "0.527619"
+          "결제통화" : "KRW"
+        
+        • 포지션: B(buy) 또는 S(sell) -> 현재 채권 선도 상품은 buy만 존재
+        • 액면통화 : 액면 통화
+        • 역맨금액 : 액면 금액 -> 액면금액은 예시처럼 숫자만 입력하고 콤마는 포함하지 않아야 해.
+        • 기초자산 : 기초자산(ISIN) -> 채권의 기초자산은 1개로 고정 해당 기초자산이 국고채인지, 국고스트립채인지 구분이 필요
+        • 효력발생일 : 효력발생일 (YYYYMMDD 형식)
+        • 만기일 : 만기일, 결제일 (YYYYMMDD 형식) -> 이건 기초자산의 만기일을 가져오지 말고 이 상품의 만기일을 가져와야해. Reference Obligation 같은 항목에 있는 Maturity Date가 아니라 이 채권 선도 상품의 만기일을 가져와야 해.
+        • BDC : Business day Convention (F: Following, M: Modified Following, P: Preceding)
+        • 영업일적용여부 : 영업일 적용 여부 (A: Adjusted, U: Unadjusted)
+        • 영업일적용도시 : 영업일 적용 도시 (SE: 서울, NY: 뉴욕, LON: 런던 등)
+        • 정산방식 : 정산 방식 (P: Physical Delivery, C: Cash Settlement)
+        • 채권유형 : 채권 유형 (FI: Fixed Interest) -> 현재 고정채밖에 없음
+        • 표면금리 : 기초자산 표면금리 -> 기초자산이 ACTB 일때는 0으로 표기하고 ACTM 일때는 표면금리를 입력하되 2.34%라면 0.024 같은 형식으로 표기해줘. 그리고 기초자산의 표면금리를 가져와야해 무조건. 매매수수료를 이걸로 출력하면 절대 안돼.
+        • 만기정산금액 : 만기 정산 금액 -> 만기 정산 금액도 액면금액처럼 숫자만 입력하고 콤마는 포함하지 않아야 해.
+        • 선도가격 : 만기 정산 금액을 액면금액으로 나눈 값, 예시에서 0.527619는 5,276,190,000 / 10,000,000,000로 구하는 것 처럼 구해줘.
+        • 결제통화 : 결제 통화
+        ###///###///###///###///###///###///###///###///
+
+        내가 예시로 준 필드 양식에 밸류 값들을 그대로 똑같이 달라는게 아니라 첨부된 텍스트에서 해당하는 정보를 찾아 값들을 채워서 주면 돼.
+        
+        이건 매우 높은 정확도를 요구하니까 꼭 금융 전문가의 입장에서 텍스트를 읽고 이해해서 정확한 값을 꼼꼼하게 채워줘.
+
+        그리고 모든 필드의 값은 반드시 채워주고 따옴표를 달아줘. 이거는 절대로 빼먹지말고 해줘야해.
+
+        선도비율 계산의 경우 내가 예시에 적어준 공식을 정확히 적용해서 계산해야해.
+
+        아래에 첨부된 텍스트를 보고 필요한 값만 채워서 **완전한 JSON 하나만** 출력해. (절대로 설명 문구를 덧붙이면 안 돼.)
+        
+        ## text:
+        {{text}}

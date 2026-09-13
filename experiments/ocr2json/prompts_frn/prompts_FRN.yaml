@@ -1,0 +1,681 @@
+prompts:
+  v_frn:
+    - version: "1.0"
+      description: "FRN 상품 json 변환 초기 버전"
+      date: "2025-06-18"
+      template: |
+        You are responsible for extracting issuance information for various financial products from termsheets and converting them into JSON.
+        As a financial expert, read the information converted from the termsheet text and create a JSON file of issuance details for the product using a fixed schema.
+        Terminology may vary across termsheets; as a financial expert, group different terms that have the same meaning into a single standard term.
+        Use the provided JSON schema field names and value formats (including date formats) in the fixed order to extract and populate only the required information.
+
+        Don't Forget:
+
+        (**Output exactly one valid JSON object and nothing else.**
+        Do NOT wrap in markdown fences, do NOT add any explanations, do NOT output any additional characters.)
+
+
+        Below are each field’s name of FRN product along with the rules and formats for extracting its value. 
+        Do not modify the given format and output exactly as I have provided.
+
+        ###///###///###///###///###///###///###///###///
+        ▶ 필드별 추출 규칙  
+        - PAYOFF유형: Always "FLR"  
+        - 포지션: Always "B"  
+        - 액면통화: “한화” → "KRW", otherwise use the corresponding three-letter currency code
+        - 액면금액: If 액면통화 is KRW → 10000, for any other 액면통화 → 100
+        - 임의상환옵션유뮤 : There's no option in Vanilla FRN so extract as "NA"
+        - 자동조기상환유무 : There's no option in Vanilla FRN so extract as "NA"
+        - AMORT유무 : There's no option in Vanilla FRN so extract as "NA"
+        - 스위치옵션유무 : There's no option in Vanilla FRN so extract as "NA" 
+        - PERIOD구분: Always 0
+        - 발행일·만기일: Use the exact “발행일” and “만기일” as shown in the term sheet, formatted as YYYYMMDD  
+        - BDC: Following→ "F", Modified Following→ "M", Preceding→ "P"
+        - 이자계산주기: None (single-period) → "N", Monthly → "M", Quarterly → "Q", Semi-Annual → "S", Annual → "A"  
+        - 이자지급주기: 1.	If the payment frequency is identical to the calculation frequency (e.g., both "M", "Q", "S", or "A"), always output "C".
+                    2. Only if they differ, use the following codes:
+                        - Monthly → "M", Quarterly → "Q", Semi-Annual → "S", Annual → "A", At maturity → "E"
+        - 이자지급시점: Advance payment → "F", Arrears (after period end) → "R"  
+        - 영업일적용여부: 1.	If the term sheet specifies that when the interest payment date falls on a non-business day, interest is carried forward to the next business day or adjusted to a business day → "A"
+                      2.	If the term sheet explicitly states that interest after the payment date is not calculated (i.e., interest calculation stops at the payment date) → "U"
+        - 영업일적용도시·FIXING기준적용도시: Seoul → "SE", New York → "NY", London → "LD", etc.
+        - DCC: "A365" → 365 days, "A360" → 360 days, "3360" → 30 days per month, 360 days per year
+                Carefully read the prose in the term sheet and output the correct value among those three options.
+        - 변동금리결정시점: Based on interest-calculation start date → "A", based on calculation end date → "R"  
+        - 결정LAG: The integer value specified in the term sheet  
+        - 승수: The decimal multiplier specified in the term sheet  
+        - 가산금리: The spread specified in the term sheet, converted to a decimal (for example, –0.5% → -0.005)
+          ※ OCR often misrecognizes the percent sign (%) as “9”. If the extracted number ends in “9”, replace that trailing “9” with “%” before converting.
+        - CAP : caprate
+                  1) Extract the smaller value between the underlying asset and the cap rate.
+                  2) If there is no information available, output “NA.”
+        - FLOOR : floorrate
+                  1) Extract the larger value between the underlying asset and the floor rate.
+                  2) If there is no information available, output “NA.”
+        ###///###///###///###///###///###///###///###///
+
+        Now I’ll show you an actual example of applying these field-specific extraction rules to convert a FRN product's term-sheet file into JSON. 
+        Below is a real example of the input file and its corresponding output file.
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\`  
+        - 1 -
+        -    다      음    -
+        5. “영업일”은 대한민국에서 은행이 영업하는 날을 말한다. 
+        [제489회]
+        제3조 (“본 사채”의 발행조건)
+        “본 사채”의 발행조건은 다음과 같다.
+        1. 발행회사의 상호 : 한국캐피탈 주식회사
+        2. 사채의 명칭 : 한국캐피탈 주식회사 제489회 무보증 사모사채
+        3. 사채의 종류 : 무기명식 무보증 이권부 사모사채
+        4. 사채의 권면금액  : 금 오십억원(₩5,000,000,000) 10매로 한다.
+        5. 사채의 권면총액  : 금 오백억원(₩50,000,000,000)
+        6. 사채의 발행가액  : 각 사채 권면금액의 100%(할인율 0.00%)로 한다.
+        7. 사채발행가액의 총액 : 금 오백억원(₩50,000,000,000)
+        “인수회사”
+        :
+        디에스투자증권(주)
+        사채의 권면총액 기준 금
+          50,000,000,000 원
+        -----------------------------------------------------------------------------
+        총     계
+        :
+        사채의 권면총액 기준 금
+          50,000,000,000 원
+        - 4 -
+        8. 사채의 이율 : “본 사채”의 이율은 매 직전이자지급일 직전 1영업일에 
+        민간채권평가회사 4사(키스채권평가, 한국자산평가, 나이스피앤아이, 에프앤
+        자산평가)에서 최종으로 제공하는 한국캐피탈 3년 만기 회사채 수익률의 산
+        술평균(소수점 넷째 자리 이하 절사)에서 –0.5%p.를 가산한 금리로 적용한다. 
+        단, 최초 이자지급을 위한 금리는 발행일 3영업일 전 민간채권평가회사 4사
+        (키스채권평가, 한국자산평가, 나이스피앤아이, 에프앤자산평가)에서 최종으
+        로 제공하는 한국캐피탈 3년 만기 회사채 수익률 산술평균(소수점 넷째 자리 
+        이하 절사)에서 –0.5%p.를 가산한 4.642%로 한다.
+        ※ 기준금리는 매 직전이자지급일 직전 1영업일에 민간채권평가회사 4사(키
+        스채권평가, 한국자산평가, 나이스피앤아이, 에프앤자산평가)에서 고시하는 
+        한국캐피탈 3년 시가평가기준 수익율의 산술평균(소수점 넷째자리 이하 절
+        사)의 금리(기준금리)로 한다.(단, 기준금리 관측일이 은행휴업일인 경우, 전
+        영업일에 결정된 기준금리를 사용한다.) 매 직전이자지급일 직전 1영업일 자
+        정까지 민간채권평가회사 4사(키스채권평가, 한국자산평가, 나이스피앤아이, 
+        에프앤자산평가)가 시스템 오작동, 파업 등 기술적인 사유로 기준금리를 고
+        시하지 못하는 경우에는 사유 발생 이전 정상적으로 고시된 마지막 민간채
+        권평가회사 4사(키스채권평가, 한국자산평가, 나이스피앤아이, 에프앤자산평
+        가)에서 고시하는 한국캐피탈 3년 시가평가기준 수익율의 산술평균(소수점 
+        넷째자리 이하 절사)의 금리를 기준금리로 한다.
+        단, 민간채권평가회사 4사(키스채권평가, 한국자산평가, 나이스피앤아이, 에프
+        앤자산평가)의 시스템 오작동, 파업 등 기술적인 사유로 인한 일시적 고시 
+        중단이 아닌, 민간채권평가회사 4사(키스채권평가, 한국자산평가, 나이스피앤
+        아이, 에프앤자산평가)에서 고시하는 한국캐피탈 3년 시가평가기준 수익율이 
+        무기한 고시중단 되는 경우 기준금리는 발행회사 및 인수단의 협의 하에 한
+        국금융투자협회, 전국은행연합회, 한국은행, 정부 및 공공기관 등 공신력있는 
+        기관의 고시금리에 가감하여 고시중단 이전의 민간채권평가회사 4사(키스채
+        권평가, 한국자산평가, 나이스피앤아이, 에프앤자산평가)에서 고시하는 한국
+        캐피탈 3년 시가평가기준 수익율의 산술평균(소수점 넷째자리 이하 절사)의 
+        금리와 유사한 금리로 변경될 수 있다.
+        단, 위 공신력있는 기관의 고시금리에 가감하여 무기한 고시중단 이전의 민
+        간채권평가회사 4사(키스채권평가, 한국자산평가, 나이스피앤아이, 에프앤자
+        산평가)에서 고시하는 한국캐피탈 3년 시가평가기준 수익율의 산술평균(소수
+        점 넷째자리 이하 절사)의 금리와 유사한 수준의 금리산출이 불가능한 경우, 
+
+        - 5 -
+        발행회사와 인수단이 협의하여 선임한 계산대리인(채권시가평가회사, 신용평
+        가회사, 회계법인, 정부출연연구기관, 공기업 등)이 계산하여 정한 금리로 기
+        준금리는 변경될 수 있다.
+        9. 사채의 상환방법과 기한 : “본 사채”의 원금은 2025년 8월 12일(3년 만
+        기)에 일시 상환한다. 다만, 상환기일이 은행의 휴업일에 해당하는 경우에는 
+        그 다음 영업일을 상환기일로 하며 상환기일 이후에는 이자를 계산하지 아
+        니한다. 
+        10. 이자지급방법과 기한 : "본 사채"의 이자는 발행일로부터 매 직전이자지
+        급일 직전 1영업일전 민간채권평가회사 4사(키스채권평가, 한국자산평가, 나
+        이스피앤아이, 에프앤자산평가)에서 최종으로 제공하는 한국캐피탈 3년 만기 
+        회사채 수익률의 산술평균(소수점 넷째 자리 이하 절사)에서 –0.5%p.를 가산
+        한 금리를 적용하여 각 3개월분의 이자를 후급한다. 각 이자지급기일에 지급
+        될 이자의 금액은 해당 이자기간에 적용될 상기 소정의 사채의 이율에 해당 
+        이자기간의 실제일수를 곱한 후, 이를 365로 나눈 금액으로 하고, 소수점 이
+        하 금액은 절사한다. 다만, 이자지급기일이 은행의 휴업일에 해당하는 경우
+        에는 그 다음 영업일을 이자지급기일로 하고, 이자지급기일 이후의 이자는 
+        계산하지 아니한다. 
+        ※이자지급기일은 다음과 같다.
+        2022년 11월 12일, 2023년 02월 12일, 2023년 05월 12일, 2023년 08월 12일,
+        2023년 11월 12일, 2024년 02월 12일, 2024년 05월 12일, 2024년 08월 12일,
+        2024년 11월 12일, 2025년 02월 12일, 2025년 05월 12일, 2025년 08월 12일.
+        12. 연체이자 : 본 조 제9항 또는 제10항의 각 기일에 “발행회사”가 원금 
+        또는 이자를 지급하지 아니한 때에는 동 연체금액에 대하여 연체이자를 지
+        급한다. 이 경우 연체이자는 원리금지급일 익일부터 실제 지급일까지의 경과
+        기간에 대하여 서울특별시에 본점을 두고 있는 시중은행이 정한 연체대출이
+        율 중 최고이율을 적용하여 계산한다. 단, 연체대출 최고이율이 “본 사채”
+        의 이율을 하회하는 경우에는 “본 사채”의 이율을 적용한다.
+        13. 사채의 발행방식 : “본 사채”의 발행방식은 다음과 같다.
+        (1) 사채권의 분할 및 병합 : “본 사채”의 사채권은 무기명식 이권부에 한
+        - 6 -
+        하며, 발행후 1년간 분할 및 합병이 불가능하고, 모집 이외의 방법으로 발행
+        하므로 한국거래소에 상장하지 아니하고 1년 이내에 50인 이상의 자에게 전
+        매할 수 없다.
+        (2) 사채의 발행 방법 : “본 사채”는 “주식·사채 등의 전자등록에 관한 
+        법률”에 의거하여, 한국예탁결제원 또는 계좌관리기관의 전자등록계좌부에 
+        전자등록한다.
+        14. 조달자금의 사용목적 : 운영자금
+        15. 사채의 발행일 : 2022년 08월 12일
+        16. 보증관련 사항
+        (1) 원리금에 대한 보증 : “본 사채”의 원금상환과 이자지급(연체이자 포
+        함) 등 일체의 지급의무에 대하여는 “지급보증인”인 군인공제회가 보증한
+        다. 다만, 금융기관이 그 지급을 보증한 것이 아니므로, “본 사채”는 무보
+        증 사모사채로 발행한다.
+        (2) 발행회사는 본조 제9항 및 제10항에 따른 원리금에 해당하는 금액을 각 
+        이자지급기일 및 원금상환기일의 15시(본조 제17항에 따라 기한이익이 상실
+        된 경우에는 기한이익이 상실된 날의 17시)까지 본 사채의 원리금지급대행기
+        관에 예치하여야 하며, 원리금의 예치가 이루어지지 않을 경우 원리금지급대
+        행기관은 즉시 해당 사실을 “지급보증인”에게 통지하여야 하고, “지급보
+        증인”은 이자지급기일 및 원리금 상환기일(본조 제17항에 따라 기한이익이 
+        상실된 경우에는 기한이익이 상실된 날의 익영업일)의 17시까지 원리금지급
+        대행기관에 지급의무가 도래한 원리금(본조 제12항에 따른 연체이자 포함)에 
+        대하여 어떠한 상계나 공제없이 무조건적으로 입금하는 방법으로 보증의무
+        를 이행하기로 한다. 
+        17. “발행회사”의 기한의 이익상실 : 
+        (1) “발행회사”는 다음 각 호의 경우 “발행회사”는 즉시 “본 사채”에 
+        관한 기한의 이익을 상실한다.
+        가.  “지급의무자”(“지급의무자”의 청산인이나 “지급의무자”의 이사를 
+        포함)가 파산 또는 회생절차개시의 신청을 한 경우
+        나.  “지급의무자”(“지급의무자”의 청산인이나 “지급의무자”의 이사를 
+        포함) 이외의 제3자가 “지급의무자”에 대한 파산 또는 회생절차개시의 신
+        청을 하고, “지급의무자”가 이에 동의(“지급의무자” 또는 그 대표자가 
+        법원의 심문에서 동의 의사를 표명한 경우 포함)하거나 위 제3자에 의한 해
+        당 신청이 있은 후 10일 이내에 그 신청이 취하 되거나 법원의 기각 결정이 
+
+        - 7 -
+        내려지지 아니한 경우. 이 경우 “지급의무자”의 동의가 있는 경우에는 그 
+        동의 의사가 법원에 제출된 시점(심문시 동의 의사 표명이 있는 경우에는 해
+        당 심문 종결시)을, 기타의 경우에는 제3자에 의한 신청일로부터 10일이 도
+        과된 때를 각 그 기준으로 하되 후자의 경우 그 기간 도과 전에 법원에 의
+        한 파산이나 회생 관련 보전처분이나 절차중지명령 또는 회생절차개시결정
+        이나 파산선고가 내려지면 그 때를 기준으로 한다.
+        다.  “지급의무자”에게 존립기간의 만료 등 정관으로 정한 해산사유의 발
+        생, 법원의 해산명령 또는 해산판결, 주주총회의 해산결의가 있는 경우
+        라.  “지급의무자”가 휴업 또는 폐업하는 경우(단, 노동쟁의로 인한 일시적
+        인 휴업은 제외한다.)
+        - 8 -
+        하. “지급의무자”가 금융산업의 구조개선에 관한 법률에 따라 금융위원회
+        로부터 적기시정조치를 받은 경우
+        18.  사채의 순위 : “본 사채”는 기발행된 사채 및 기타 채무와 동순위에 
+        있다. (다만, 법령에 의하여 우선권이 인정되는 채권, 채무는 제외한다)
+        제 4 조 (발행관계사항)
+        1. 발행일 및 인수일 : 2022년 08월 12일
+        2. 사채금납입기일   : 2022년 08월 12일
+        3. 발행금액결제일   : 2022년 08월 12일
+        4. “본 사채”의 납입을 맡을 은행 : (주)우리은행 종로기업영업지원팀
+        5. 등록기관 : “본 사채”의 등록기관은 한국예탁결제원으로 하며, 등록필증
+        은 한국예탁결제원에서 정한 양식으로 한다.
+        6. 등록청구 :  "발행회사"는 각 "인수단"이 총액인수한 채권에 대하여 사채
+        금 납입기일에 "주식ㆍ사채 등의 전자등록에 관한 법률" 제25조에 의한 전
+        자등록을 신청할 수 있으며, 각 "인수단"은 "발행회사"로 하여금 전자등록 
+        신청을 할 수 있도록 전자등록 내역을 "발행회사"에 통보하여야 한다. 
+        제 5 조 (“발행회사” 및 “지급보증인”의 보장)
+        1. “발행회사” 및 “지급보증인”은 “인수단”에게 다음과 같은 내용을 
+        보장한다.
+        (1) “발행회사”의 이사회는 2022년 08월 03일 적법한 절차에 따라 “본 사
+        채”의 발행을 승인하는 결의를 하였고, 그 이후 “본 사채”의 발행조건의 
+        변경, 발행취소 또는 발행과 관련하여 추가로 어떠한 내용의 결의를 하지 않
+        았다.
+        (2) “지급보증인”의 이사회는 2020년 11월 17일 적법한 절차에 따라 “본 
+        사채”의 보증을 승인하는 결의를 하였고, 그 이후 “본 사채”의 보증과 관
+        련하여 추가로 어떠한 내용의 결의를 하지 않았다. 
+        (3) “발행회사”가 “인수단”에게 이미 공개한 내용 이외에는 “발행회
+        사”의 최근 회계년도 이후 “발행회사”의 수익, 운영결과, 자금, 재무 등의 
+        경영상태 및 예상과 관련하여 중대하면서 불리한 어떠한 변화도 발생하지 
+        않았다.
+
+        - 9 -
+        제 6 조 (인수시기)
+        본 인수계약서에 의한 “인수단”의 인수의무는 사채금 납입기일 이전에 본 
+        계약서상 “발행회사”가 사채납입기일까지 이행하여야 할 모든 의무를 이
+        행하고, 발행회사의 보장조항 및 확약조항을 위반하지 않은 것을 조건으로, 
+        사채금 납입일인 2022년 08월 12일에 발생된다.
+        제 7 조 (원리금상환사무의 대행)
+        “본 사채”의 원리금 상환업무는 (주)우리은행 종로기업영업지원팀에서 대
+        행하며, 취급장소 및 절차 등은 “발행회사”가 동 은행과 체결하는 계약에
+        서 정한 바에 따른다.
+        제 8 조 (사채금 사용용도)
+        1. “발행회사”는 인수수수료로 제489회 무보증 사모사채 권면총액의 
+        10,000분의 60에 해당하는 금삼억원(₩300,000,000)을 “본 사채” 납입일 이
+        후 최초로 도래하는 영업일에 “인수단”에게 지급하여야 한다.
+        2. 제1항의 “인수수수료”가 “본 사채” 납일일 이후 최초로 도래하는 영
+        업일에 지급이 완료되지 않을 시에는 그 지급하여야 할 날로부터 실제 지급
+        일까지의 경과기간에 대하여 서울특별시에 본점을 두고 있는 4개 시중은행
+        (국민은행, 신한은행, 우리은행, 하나은행)의 연체대출 최고이율의 산술평균
+        을 적용한 연가산금을 지급한다.
+        \`\`\`
+
+        **Output (JSON):**  
+        ```
+        {
+          "PAYOFF유형": "FLR",
+          "포지션": "B",
+          "액면통화": "KRW",
+          "액면금액": "10000",
+          "임의상환옵션유무" : "NA",
+          "자동조기상환유무" : "NA",
+          "AMORT유무" : "NA",
+          "스위치옵션유무" : "NA",
+          "PERIOD구분": "0",
+          "발행일": "20220812",
+          "만기일": "20250812",
+          "BDC": "F",
+          "이자계산주기": "Q",
+          "이자지급주기": "C",
+          "이자지급시점": "R",
+          "영업일적용여부": "U",
+          "영업일적용도시": "SE",
+          "FIXING기준적용도시": "SE",
+          "DCC": "A365",
+          "변동금리결정시점": "A",
+          "결정LAG": "1",
+          "승수": "1.0",
+          "가산금리": "-0.005"
+          "CAP" : "NA",
+          "FLOOR" : "NA"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+
+        And from here are examples where text in which the percent sign (%) was misrecognized during the OCR process is automatically recognized as “%” and converted to the correct values.
+
+        ▶ Chain-of-Thought (internal reasoning only – do NOT include in output):  
+        1. Detect and correct OCR errors (e.g., a trailing “9” means “%” → adjust spread accordingly).
+        2. In the input text file, if the numeric spread value ends with “6”, “9”, “69”, or “96”, interpret that trailing segment as a percent symbol 
+          and output only the preceding digits as the spread. For example, if the text shows “1.4496”, treat the trailing “96” as “%”, so interpret it as 1.44%, and output the spread as 0.0144.
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\`  
+        9 사채의   이자울(할인율):
+        가  제 1-1 회 사모사채:  매  직전이자지급일 의 직전   영업일에 한국금움투자협 회가
+        고시하는 91 일물 CD  최종호가수억울(이하   "기준금리"라   한다)에 연 1.4496틀
+        가산한   변동금리로   한다  다만   최초 이자지급올 위한  금리논 연 2.549로  한다:
+        \`\`\`
+
+        **Output (JSON):**  
+        ```json
+        {
+          "가산금리": "0.0144"
+        }
+        ###///###///###///###///###///###///###///###///
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\`  
+        채무증권 명칭
+        무보증사채
+        모집(매출)방법
+        공모
+        권면(전자등록)
+        총액
+        20,000,000,000
+        모집(매출)총액
+        20,000,000,000
+        발행가액
+        20,000,000,000
+        이자율
+        현대커머셜 5년 민평
+        발행수익률
+        -
+        상환기일
+        2025년 02월 20일
+        \`\`\`
+
+        **Output (JSON):**  
+        ```
+        {
+          "가산금리": "0.0"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\`  
+        9 사채의  이자율: 기준금리에 연율 1.309틀   가산한  변동금리로   한다  여기에서  기준
+        금리라 함은 매 직전이자지급일 직전 l 영업일예 서울시간 오후 4 시 한국금음투자
+        협회에서 산정 고시하는 91 일굴 CD 금리물 말한다; 다만; 최초 이자지급올 위한 이
+        자율온 연 2,329로 한다;
+        \`\`\`
+
+        **Output (JSON):**  
+        ```
+        {
+          "가산금리": "0.013"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\`  
+        1l. 사채   이자의   지급방법과   기한: 발행회사는 본 사채의 최초 이자지급일올 2020 년
+        9 월 ]l 일로 하고 이후 매 3 개월마다   해당  사채  원금에   대하여   제 9 호의  이자율
+        올 급한 금액올 해당 이자기간 동안  실제  경과된 일수(초일은   산입하고  최종일은
+        불산입하는 방식에  의함)틀 l 년올 365 일로 일할계산하여   사채권자에제   지급하기
+        로 한다: 다만 ,  마지막 이자지급일은 2025 년 12 월 22 일로 한다   한편. 이자지급
+        일이   영업일이 아년 경우 그 다음 영업일(이하   "의영업일"에   지급하다.
+        \`\`\`
+
+        **Output (JSON):**  
+        ```
+        {
+          "영업일적용여부": "U"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\`  
+        9 사채의   표면이자율:   발행일부터   만기일까지 매   직전   이자지급일(단   최초   이자기
+        간의   경우에는   발행일올 의미함) 직전 일(1) 영업일   전에 10 년 만기 원화 이자율
+        스입   금리로 로이터(Reuters Page) "PYKRW" 내 QRTIA365 KRWIKRW 열의 I0YR
+        2
+
+        ===== 페이지 구분선 =====
+
+        사모사채 인수계약서
+        에 서울시간 16:00   고시되는 10 년 만기   원화/원화   금리스입에 대한   매수금리와
+        매도금리의   산술평균값(IoY KRW CMS)에 연 0.5839틀   가산한   금리(소수점   넷째
+        자리  이하   절사) 로(발행시   이울: 연 3.585%+연 0.583%-연   4.168%) 발행하다:
+        10. 발행방식: 본 사채는 r주식 사채 등의   전자등록에   관한 법률_  제36조에   의거하여
+        사채권올   발행하지 않고   한국예탁결제원의   전자등록계좌부에 전자등록하다   단.
+        발행 회사는 r주식 사채  등의   전자등록에   관한   법률 ! 제25조에   의한   신규   전자
+        등록   신청   업무   일체틀   하이투자증권   주식회사에   위임하다, 이   경우에는   하이투
+        자증권   주식회사는   선랑한   관리자의   주의의무릎 다하여야   한다 .
+        11. 사채   이자의   지급방법과   기한:  발행회사는 본 사채의  최초 이자지급일올 2023 년
+        2월 17 일로 하고 이후 매 3 개월이   경과한 달의   최초 이자지급일   응당일에   해당
+        사채 원금에   대하여 제 9 호의  이자율올 급한 금액올 해당 이자기간[직전 이자지
+        급일(최초   이자지급의   경우   발행일)로부터 어느 이자지급일까지의   기간] 동안  실
+        제 경과된   일수(초일은   산입하고   최종일은 불산입하는   방식에   의함)틀 1 년올 365
+        일로   일할계산하여   사채권자에게   지급하기로   한다   한편 , 이자지급일이   영업일이
+        아년   경우 그 다음l염 일(이하 l입연원일에   지급하다   이자지급일 이후에는 이
+        자흘   계산하지   아니한다 .  이자지급일흔 다음과   같다.
+        \`\`\`
+
+        **Output (JSON):**  
+        ```
+        {
+          "변동금리결정시점": "A",
+          "가산금리" : "0.00583"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+
+        Please accurately convert the file I provided into JSON, 
+        based on the field-specific extraction rules I explained and the example showing their application to a real file.
+        Please enclose all field values in double quotes like this when outputting.
+
+        And ABOVE ALL, You MUST Keep This Rule :
+        Extract only the required values and output a single, complete JSON with no explanatory text.
+
+        ## text:
+        {{text}}
+
+
+  v_frn_feed:
+    - version: "1.0"
+      description: "FRN 상품 json 변환 피드백반영 버전"
+      date: "2025-06-23"
+      template: |
+        You are responsible for extracting issuance information for various financial products from termsheets and converting them into JSON.
+        As a financial expert, read the information converted from the termsheet text and create a JSON file of issuance details for the product using a fixed schema.
+        Terminology may vary across termsheets; as a financial expert, group different terms that have the same meaning into a single standard term.
+        Use the provided JSON schema field names and value formats (including date formats) in the fixed order to extract and populate only the required information.
+
+        Don't Forget:
+
+        (**Output exactly one valid JSON object and nothing else.**
+        Do NOT wrap in markdown fences, do NOT add any explanations, do NOT output any additional characters.)
+
+
+        Below are each field’s name of FRN product along with the rules and formats for extracting its value. 
+        Do not modify the given format and output exactly as I have provided.
+
+        ###///###///###///###///###///###///###///###///
+        ▶ 필드별 추출 규칙  
+        - PAYOFF유형: Always "FLR"  
+        - 포지션: Always "B"  
+        - 액면통화: “한화” → "KRW", otherwise use the corresponding three-letter currency code
+        - 액면금액: If 액면통화 is KRW → 10000, for any other 액면통화 → 100
+        - 임의상환옵션유뮤 : There's no option in Vanilla FRN so extract as "NA"
+        - 자동조기상환유무 : There's no option in Vanilla FRN so extract as "NA"
+        - AMORT유무 : There's no option in Vanilla FRN so extract as "NA"
+        - 스위치옵션유무 : There's no option in Vanilla FRN so extract as "NA" 
+        - PERIOD구분: Always 0
+        - 발행일·만기일: Extract the product’s issuance and maturity dates directly from the term sheet’s context—identify and parse the relevant date lines even if they aren’t explicitly labeled as “발행일” or “만기일.”
+                       formatted as YYYYMMDD  
+        - BDC: Following→ "F", Modified Following→ "M", Preceding→ "P"
+        - 이자계산주기: None (single-period) → "N", Monthly → "M", Quarterly → "Q", Semi-Annual → "S", Annual → "A"  
+        - 이자지급주기: 1.	If the payment frequency is identical to the calculation frequency (e.g., both "M", "Q", "S", or "A"), always output "C".
+                    2. Only if they differ, use the following codes:
+                        - Monthly → "M", Quarterly → "Q", Semi-Annual → "S", Annual → "A", At maturity → "E"
+        - 이자지급시점: Advance payment → "F", Arrears (after period end) → "R"  
+        - 영업일적용여부: U, A only 2 values are allowed.
+          - Default to "U" in most cases, but output "A" if it appears to be an exception.
+        - 영업일적용도시·FIXING기준적용도시: Seoul → "SE", New York → "NY", London → "LD", etc.
+        - DCC: "A365" → 365 days, "A360" → 360 days, "3360" → 30 days per month, 360 days per year
+                Carefully read the prose in the term sheet and output the correct value among those three options.
+        - 변동금리결정시점: Based on interest-calculation start date → "A", based on calculation end date → "R"  
+        - 결정LAG: The integer value specified in the term sheet  
+        - 승수: The decimal multiplier specified in the term sheet  
+        - 가산금리: The spread specified in the term sheet, converted to a decimal (for example, –0.5% → -0.005)
+                  Please carefully avoid extracting the spread field from phrases that do not include terms like “가산한” or “가산금리”, 
+                  such as “최초 이자지급을 위한 금리” or “기준금리인”, as these do not indicate the spread.
+          ※ OCR often misrecognizes the percent sign (%) as “9”. If the extracted number ends in “9”, replace that trailing “9” with “%” before converting.
+        - CAP : caprate
+                  1) Extract the smaller value between the underlying asset and the cap rate.
+                  2) If there is no information available, output “NA.”
+        - FLOOR : floorrate
+                  - Default to "NA" in most cases, but output the the larger value between the underlying asset and the floor rate. if it appears to be an exception.
+        ###///###///###///###///###///###///###///###///
+
+        This is the fixed JSON schema you need to produce.
+        Please strictly adhere to this schema and output a standardized JSON file.
+
+        {
+          "PAYOFF유형": "",
+          "포지션": "",
+          "액면통화": "",
+          "액면금액": "",
+          "임의상환옵션유무" : "",
+          "자동조기상환유무" : "",
+          "AMORT유무" : "",
+          "스위치옵션유무" : "",
+          "PERIOD구분": "",
+          "발행일": "",
+          "만기일": "",
+          "BDC": "",
+          "이자계산주기": "",
+          "이자지급주기": "",
+          "이자지급시점": "",
+          "영업일적용여부": "",
+          "영업일적용도시": "",
+          "FIXING기준적용도시": "",
+          "DCC": "",
+          "변동금리결정시점": "",
+          "결정LAG": "",
+          "승수": "",
+          "가산금리": ""
+          "CAP" : "",
+          "FLOOR" : ""
+        }
+
+        From here are real example correct extractions of specific fields from real term sheets, 
+        using the above field-specific output rules.
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\` 
+        총액
+        20,000,000,000
+        모집(매출)총액
+        20,000,000,000
+        발행가액
+        20,000,000,000
+        이자율
+        91일물 CD금리
+        +1.839%p.
+        발행수익률
+        ```json
+        {
+          "가산금리": "0.01839"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\`  
+        채무증권 명칭
+        무보증사채
+        모집(매출)방법
+        공모
+        권면(전자등록)
+        총액
+        20,000,000,000
+        모집(매출)총액
+        20,000,000,000
+        발행가액
+        20,000,000,000
+        이자율
+        현대커머셜 5년 민평
+        발행수익률
+        -
+        상환기일
+        2025년 02월 20일
+        \`\`\`
+
+        **Output (JSON):**  
+        Read that "이자율" section in the input is “현대커머셜 5년 민평” and, 
+        since no information about the spread is provided, output 0.0.
+        ```
+        {
+          "가산금리": "0.0"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\`  
+        총액
+        20,000,000,000
+        모집(매출)총액
+        20,000,000,000
+        발행가액
+        20,000,000,000
+        이자율
+        5.075
+        발행수익률
+        5.075
+        \`\`\`
+
+        **Output (JSON):**  
+        Read that "이자율" section in the input is “5.075” and, 
+        since no information about the spread is provided, output 0.0. (no 5.075 + nn% format)
+        ```
+        {
+          "가산금리": "0.0"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+
+
+
+        And from here are examples where text in which the percent sign (%) was misrecognized during the OCR process is automatically recognized as “%” and converted to the correct values.
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\` 
+        9 사채의   이자울(할인율):
+        가  제 1-1 회 사모사채:  매  직전이자지급일 의 직전   영업일에 한국금움투자협 회가
+        고시하는 91 일물 CD  최종호가수억울(이하   "기준금리"라   한다)에 연 1.4496틀
+        가산한   변동금리로   한다  다만   최초 이자지급올 위한  금리논 연 2.549로  한다:
+        \`\`\`
+
+        **Output (JSON):**  
+        Read the phrase “연 1.4496틀 가산한 변동금리로” from the input, 
+        detect that the trailing “96” was an OCR misrecognition of the “%” symbol, 
+        interpret it as 1.44%, and output the “가산금리” field in the JSON schema as 0.0144.
+        ```json
+        {
+          "가산금리": "0.0144"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\`  
+        9 사채의  이자율: 기준금리에 연율 1.309틀   가산한  변동금리로   한다  여기에서  기준
+        금리라 함은 매 직전이자지급일 직전 l 영업일예 서울시간 오후 4 시 한국금음투자
+        협회에서 산정 고시하는 91 일굴 CD 금리물 말한다; 다만; 최초 이자지급올 위한 이
+        자율온 연 2,329로 한다;
+        \`\`\`
+
+        **Output (JSON):**
+        Read the phrase “기준금리에 연율 1.309틀   가산한 변동금리로” from the input, 
+        detect that the trailing “9” was an OCR misrecognition of the “%” symbol, 
+        interpret it as 1.30%, and output the “가산금리” field in the JSON schema as 0.013.
+        ```
+        {
+          "가산금리": "0.013"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+
+        ###///###///###///###///###///###///###///###///
+        **Input (Term-sheet text):**  
+        \`\`\`  
+        9 사채의   표면이자율:   발행일부터   만기일까지 매   직전   이자지급일(단   최초   이자기
+        간의   경우에는   발행일올 의미함) 직전 일(1) 영업일   전에 10 년 만기 원화 이자율
+        스입   금리로 로이터(Reuters Page) "PYKRW" 내 QRTIA365 KRWIKRW 열의 I0YR
+        사모사채 인수계약서
+        에 서울시간 16:00   고시되는 10 년 만기   원화/원화   금리스입에 대한   매수금리와
+        매도금리의   산술평균값(IoY KRW CMS)에 연 0.5839틀   가산한   금리(소수점   넷째
+        자리  이하   절사) 로(발행시   이울: 연 3.585%+연 0.583%-연   4.168%) 발행하다:
+        10. 발행방식: 본 사채는 r주식 사채 등의   전자등록에   관한 법률_  제36조에   의거하여
+        사채권올   발행하지 않고   한국예탁결제원의   전자등록계좌부에 전자등록하다   단.
+        발행 회사는 r주식 사채  등의   전자등록에   관한   법률 ! 제25조에   의한   신규   전자
+        등록   신청   업무   일체틀   하이투자증권   주식회사에   위임하다, 이   경우에는   하이투
+        자증권   주식회사는   선랑한   관리자의   주의의무릎 다하여야   한다 .
+        11. 사채   이자의   지급방법과   기한:  발행회사는 본 사채의  최초 이자지급일올 2023 년
+        2월 17 일로 하고 이후 매 3 개월이   경과한 달의   최초 이자지급일   응당일에   해당
+        사채 원금에   대하여 제 9 호의  이자율올 급한 금액올 해당 이자기간[직전 이자지
+        급일(최초   이자지급의   경우   발행일)로부터 어느 이자지급일까지의   기간] 동안  실
+        제 경과된   일수(초일은   산입하고   최종일은 불산입하는   방식에   의함)틀 1 년올 365
+        일로   일할계산하여   사채권자에게   지급하기로   한다   한편 , 이자지급일이   영업일이
+        아년   경우 그 다음l염 일(이하 l입연원일에   지급하다   이자지급일 이후에는 이
+        자흘   계산하지   아니한다 .  이자지급일흔 다음과   같다.
+        \`\`\`
+
+        **Output (JSON):** 
+        Read the phrase “연 0.5839틀 가산한 금리” from the input, 
+        detect that the trailing “9” was an OCR misrecognition of the “%” symbol, 
+        interpret it as 0.583%, and output the “가산금리” field in the JSON schema as 0.00583.
+
+        In case of 변동금리결정시점, Read the phrase "발행일부터   만기일까지 매   직전   이자지급일(단   최초   이자기
+        간의   경우에는   발행일올 의미함) 직전 일(1) 영업일   전에", And Based on that phrase 
+        interpret "변동금리결정시점" as “A.”
+        ```
+        {
+          "변동금리결정시점": "A",
+          "가산금리" : "0.00583"
+          "영업일적용여부" : "U"
+        }
+        ```
+        ###///###///###///###///###///###///###///###///
+       
+        Please accurately convert the file I provided into JSON, 
+        based on the field-specific extraction rules I explained and the example showing their application to a real file.
+        Please enclose all field values in double quotes like this when outputting.
+
+        And ABOVE ALL, You MUST Keep This Rule :
+        Extract only the required values and output a single, complete JSON with no explanatory text.
+
+        ## text:
+        {{text}}

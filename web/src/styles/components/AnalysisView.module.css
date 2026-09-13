@@ -1,0 +1,265 @@
+/* Analysis View Component Styles */
+
+.analysisView {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.headerNav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  text-align: left;
+}
+
+.backBtn {
+  background: var(--color-gray-200);
+  color: var(--text-secondary);
+  border: none;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-full);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.backBtn:hover {
+  background: var(--color-gray-300);
+  transform: translateX(-2px);
+}
+
+/* File Info Cards */
+.fileInfoCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-gray-200);
+}
+
+.fileInfoCard .fileIcon {
+  font-size: var(--text-2xl);
+  color: var(--color-primary-start);
+}
+
+.fileInfoCard .fileCheckbox {
+  font-size: var(--text-xl);
+  width: 32px;
+  height: 32px;
+}
+
+.fileInfoCard .fileCheckbox.checked {
+  background-color: var(--color-primary-start);
+  border-color: var(--color-primary-start);
+  color: var(--text-inverse);
+}
+
+.fileInfoCard h4 {
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  margin-bottom: var(--space-1);
+  word-break: break-word;
+}
+
+.fileInfoCard p {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+/* Convert Actions */
+.convertActions {
+  display: flex;
+  gap: var(--space-3);
+  flex-direction: column;
+}
+
+.analyzeBtn {
+  background: linear-gradient(135deg, var(--color-primary-start) 0%, var(--color-primary-end) 100%);
+  color: var(--text-inverse);
+  border: none;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-full);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  width: 100%;
+}
+
+.analyzeBtn.mappingBtn {
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
+}
+
+.analyzeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+
+.analyzeBtn.mappingBtn:hover {
+  box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
+}
+
+.analyzeBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Product Selector */
+.productSelector {
+  margin-bottom: var(--space-10);
+  text-align: center;
+}
+
+.productSelector label {
+  display: block;
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.productSelector select {
+  padding: var(--space-4) var(--space-5);
+  border: 2px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-lg);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-width: 200px;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.productSelector select:focus {
+  outline: none;
+  border-color: var(--color-primary-start);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* File List and Cards */
+.fileListContainer {
+  flex: 1;
+  padding: var(--space-10) var(--space-5);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-8);
+  padding: 0 var(--space-5);
+}
+
+.listHeader h2 {
+  color: var(--text-primary);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+}
+
+.addFilesBtn {
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-info);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  transition: background-color var(--transition-base);
+}
+
+.addFilesBtn:hover {
+  background-color: var(--color-info-dark);
+}
+
+.fileListGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-5);
+  margin-bottom: var(--space-10);
+}
+
+.fileCard {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.fileCard:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--color-primary-start);
+}
+
+.fileCard.completed {
+  border-color: var(--color-success);
+  background: linear-gradient(135deg, var(--color-success-light) 0%, #e6fffa 100%);
+}
+
+.fileCard.completed:hover {
+  border-color: var(--color-success-dark);
+}
+
+.fileIconLarge {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-4);
+  text-align: center;
+  font-weight: var(--font-bold);
+  color: var(--color-primary-start);
+  background: var(--color-gray-100);
+  border: 2px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4) auto;
+}
+
+/* Feature Section */
+.featureSection {
+  margin-top: var(--space-10);
+  padding: var(--space-8);
+  background: var(--bg-muted);
+  border-radius: var(--radius-xl);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .fileListGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  
+  .fileCard {
+    padding: var(--space-4);
+  }
+  
+  .listHeader {
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: stretch;
+  }
+  
+  .listHeader h2 {
+    font-size: var(--text-2xl);
+    text-align: center;
+  }
+}

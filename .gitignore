@@ -1,0 +1,65 @@
+# --- 비밀정보 ---
+.env
+.env.local
+*.key
+credentials.json
+
+# --- 의존성 ---
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.so
+
+# --- 빌드 산출물 ---
+build/
+dist/
+coverage/
+
+# --- 런타임 산출물 ---
+output/
+temp/
+web/backend/output/
+web/backend/temp/
+*.log
+
+# --- 초기 프로토타입 ---
+# 회사 독점·기밀 라이선스가 붙은 코드가 포함돼 저장소에 넣지 않는다.
+# 해당 단계에서 내린 판단은 README 의 "설계 판단" 절에 남겼다.
+archive/
+
+# --- 설계 문서 ---
+# 화면설계서·시연 캡처에 실제 계약 내용과 담당자 연락처가 박혀 있어 통째로 제외한다.
+# (이미지·PDF·PPTX 내부라 텍스트 grep 으로는 걸러지지 않는다)
+# 직접 작성한 프롬프트 문서만 예외로 포함한다.
+docs/*
+!docs/README.md
+!docs/architecture-prompt.md
+
+# --- 데이터 (실제 계약서는 저장소에 포함하지 않는다) ---
+data/termsheets/
+data/raw/
+data/processed/
+*.pdf
+*.hwp
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.xlsm
+# 샘플은 문서 확장자 차단에서 제외한다
+!data/samples/**
+
+# --- 노트북 ---
+.ipynb_checkpoints/
+
+# --- OS / 에디터 ---
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+.vscode/
+.idea/
+*.swp

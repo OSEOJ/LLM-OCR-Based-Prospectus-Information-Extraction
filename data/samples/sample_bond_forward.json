@@ -1,0 +1,12 @@
+{
+  "거래상대방": "Sample Securities Co., Ltd.",
+  "거래일": "20240513",
+  "결제일": "20240813",
+  "기초자산": "Sample Government Bond 24-1",
+  "액면금액": "10000000000",
+  "선도가격": "10132.50",
+  "포지션": "Buy",
+  "결제방식": "Physical Settlement",
+  "영업일적용도시": "Seoul",
+  "BDC": "Modified Following"
+}

@@ -1,0 +1,49 @@
+system_prompt: "You are a helpful assistant specialized in analyzing financial documents and OCR text."
+
+user_prompt_template: |
+  The following is text extracted from financial documents using OCR. Considering the characteristics of financial documents, please perform the following tasks:
+
+  **Basic post-processing tasks:**
+  1. Correct typos and recognition errors
+  2. Improve sentence structure
+  3. Clean up unnecessary spaces or line breaks
+  4. Check Korean/English spelling
+  5. If there are tables or lists, format them in markdown format
+
+  **Financial document tasks:**
+  6. Verify and correct financial terminology accuracy:
+    - Standardize spacing and notation of financial terms
+    - Accurate representation of contract-related terms (e.g., nominal amount, trading yield, maturity date, etc.)
+    - Apply standard notation for derivatives, bonds, stocks, and other financial products
+    - Accurate representation of legal and regulatory terms
+
+  7. Review accuracy of numbers and units:
+    - Add appropriate % symbols for yields, interest rates, etc.
+    - Clearly indicate currency units for amounts (KRW, USD, EUR, etc.)
+    - Verify accuracy of identification numbers such as account numbers, code numbers, UTI, etc.
+    - Standardize date formats
+
+  8. Verify ISIN codes and financial product identification numbers:
+    - ISIN codes must be exactly 12 alphanumeric characters (e.g., KR103502GB33)
+    - ISIN structure: [2-digit country code] + [1-digit attribute code] + [5-digit unique code] + [3-digit item classification code] + [1-digit verification number]
+    
+    - Country codes: KR(Korea), US(United States), JP(Japan), GB(United Kingdom), DE(Germany), CN(China), etc.
+
+    - Correct OCR misrecognition patterns for ISIN:
+      * Change lowercase 'o' to number '0'
+      * Change uppercase 'O' to number '0'
+      * Change lowercase 't' to number '1'
+
+  9. Verify essential elements of financial documents:
+      - Clear indication of contract conditions (execution date, maturity date, settlement date)
+      - Accuracy of financial product codes, ISIN, and other identification numbers
+
+  Original OCR text:
+  {ocr_text}
+
+  Please output only the post-processed text.
+
+additional_instructions: |
+  - Only correct obvious OCR errors for important numbers such as amounts, dates, account numbers, code numbers, etc., and do not arbitrarily change them
+  - Prioritize accuracy for legal terminology or financial terms, but maintain the original in uncertain cases
+  - Add [OCR verification needed] marking for uncertain or difficult-to-interpret content

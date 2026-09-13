@@ -1,0 +1,64 @@
+/* Upload View Component Styles */
+
+.uploadView {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.uploadContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: var(--space-10) var(--space-5);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.uploadAreaCenter {
+  width: 100%;
+  max-width: 600px;
+  border: 3px dashed var(--color-gray-300);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-20) var(--space-10);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-xl);
+}
+
+.uploadAreaCenter:hover {
+  border-color: var(--color-primary-start);
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-2xl);
+}
+
+.uploadAreaCenter.dragover {
+  border-color: var(--color-primary-start);
+  background: rgba(102, 126, 234, 0.1);
+  transform: scale(1.02);
+}
+
+/* List View */
+.listView {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .uploadContainer {
+    padding: var(--space-8) var(--space-4);
+  }
+  
+  .uploadAreaCenter {
+    padding: var(--space-12) var(--space-6);
+    width: 100%;
+  }
+}

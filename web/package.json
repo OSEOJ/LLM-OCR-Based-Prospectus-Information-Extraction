@@ -1,0 +1,55 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "mammoth": "^1.9.1",
+    "pdfjs-dist": "^5.3.93",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-pdf": "^10.0.1",
+    "react-scripts": "5.0.1"
+  },
+  "scripts": {
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "frontend": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "backend": "./start_backend.sh",
+    "start:frontend-only": "react-scripts start",
+    "start:backend-only": "./start_backend.sh",
+    "tunnel:frontend": "npx localtunnel --port 3000 --subdomain pdf-converter-frontend",
+    "tunnel:backend": "npx localtunnel --port 8000 --subdomain pdf-converter-api",
+    "tunnel:both": "concurrently \"npx localtunnel --port 3000 --subdomain pdf-converter-frontend\" \"npx localtunnel --port 8000 --subdomain pdf-converter-api\"",
+    "start:public": "concurrently \"npm run backend\" \"npm run frontend\" \"npm run tunnel:both\"",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "clean": "rm -rf build node_modules",
+    "clean:backend": "find backend -name '*.pyc' -delete && rm -rf backend/__pycache__",
+    "setup": "npm install && pip install -r requirements.txt"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}

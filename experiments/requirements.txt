@@ -1,0 +1,17 @@
+# experiments/ 전체 노트북 공용 의존성
+openai>=1.93
+python-dotenv>=1.1
+pyyaml>=6.0
+tiktoken>=0.9
+pandas>=2.0
+matplotlib>=3.7
+seaborn>=0.13
+
+# OCR 엔진 비교 (experiments/ocr)
+easyocr>=1.7
+paddleocr>=2.7
+pytesseract>=0.3
+pdf2image>=1.17
+opencv-python>=4.8
+pillow>=10.0
+numpy>=1.24

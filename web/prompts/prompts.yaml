@@ -1,0 +1,406 @@
+prompts:
+  # 채권선도 상품
+  bond_forward:
+    - version: "1.0"
+      description: "채권선도 상품 json 변환 최종 버전"
+      date: "2025-06-10"
+      template: |
+        You are responsible for extracting issuance information for various financial products from termsheets and converting them into JSON.
+        As a financial expert, read the information converted from the termsheet text and create a JSON file of issuance details for the product using a fixed schema.
+        Terminology may vary across termsheets; as a financial expert, group different terms that have the same meaning into a single standard term.
+        Use the provided JSON schema field names and value formats (including date formats) in the fixed order to extract and populate only the required information.
+
+        The following is the example schema and key descriptions for a bond-forward product:
+
+        ###///###///###///###///###///###///###///###///
+          "포지션"       : "B"
+          "액면통화"     : "KRW"
+          "역맨금액"     : "10000000000"
+          "기초자산"     : "KRC035LP5331"
+          "효력발생일"   : "20250519"
+          "만기일"       : "20270928"
+          "BDC"          : "F"
+          "영업일적용도시": "SE"
+          "정산방식"     : "P"
+          "채권유형"     : "FI"
+          "표면금리"     : "0"
+          "만기정산금액" : "5276190000"
+          "선도가격"     : "0.527619"
+          "결제통화"     : "KRW"
+        ###///###///###///###///###///###///###///###///
+
+        • 포지션: B(buy) or S(sell) -> currently only buy exists for bond-forward products  
+        • 액면통화 : notional currency  
+        • 역맨금액 : notional amount -> enter only digits like in the example, without commas  
+        • 기초자산 : underlying asset (ISIN) -> the bond's underlying asset is fixed to one; distinguish between government bond and government strip  
+        • 효력발생일 : effective date (YYYYMMDD format)  
+        • 만기일 : maturity date, settlement date (YYYYMMDD format) -> extract this product's maturity date, not the underlying asset's; do not use the reference obligation's Maturity Date. Extract exact number of given txt
+        • BDC : Business day Convention (F: Following, M: Modified Following, P: Preceding)  
+        • 영업일적용도시 : business day calendar city (SE: Seoul, NY: New York, LON: London, etc.)  
+        • 정산방식 : settlement method (P: Physical Delivery, C: Cash Settlement)  
+        • 채권유형 : bond type (FI: Fixed Interest) -> currently only fixed-rate bonds exist  
+        • 표면금리 : underlying coupon rate -> if underlying code is ACTB, mark as 0; if ACTM, input the coupon rate as a decimal (e.g., 2.34% -> 0.0234). Always extract the bond's coupon rate; never output transaction fees.  
+        • 만기정산금액 : maturity settlement amount -> enter only digits like the notional amount, without commas  
+        • 선도가격 : maturity settlement amount divided by notional amount, calculate as in the example (e.g., 5,276,190,000 / 10,000,000,000 = 0.527619). You should very carefully compute this value, as it is crucial for the bond-forward product.
+        • 결제통화 : settlement currency
+
+        Use the attached text to find and populate the values, not to copy the example values.
+        This requires very high accuracy; read and understand the text as a financial expert and fill in the values meticulously.
+        All fields must be filled and values must be enclosed in quotes, without exception.
+        Compute the forward price using the exact formula given in the example.
+        
+        **OUTPUT FORMAT:**
+        You must output a JSON object with the following structure:
+        {
+          "json_result": {
+            // your extracted bond forward JSON data here
+          },
+          "field_mappings": [
+            {
+              "field_name": "field name from schema",
+              "source_text": "exact text from document that corresponds to this field",
+              "start_position": number,
+              "end_position": number,
+              "confidence": 0.9
+            }
+            // ... for each field
+          ]
+        }
+        Extract only the required values and output this structured JSON with no explanatory text.
+
+        IMPORTANT RULES:
+
+        For all numeric fields such as 역맨금액, 만기정산금액, and 선도가격:
+        - Extract the exact number of digits as they appear in the text, without performing any unit conversion or calculation.
+        - Do not attempt to convert units like '억원', '조', '만원' into numbers. Only extract the number that is explicitly written in Arabic numerals in the text.
+        - Never omit any digit or leading zero; the extracted number must exactly match the number in the text.
+        - Never infer, round, or recalculate the number. Only direct extraction is allowed.
+
+        For date fields such as 효력발생일 and 만기일:
+
+        - Extract the exact date string as written in the text.
+        - Do not add or subtract any days. Do not apply settlement conventions (such as T+1 or T+2). Simply copy the date shown in the text without adjustment.
+        - IMPORTANT: For 만기일, extract ONLY the maturity date of the product itself (i.e., this bond-forward product), not the maturity date of any underlying asset or reference obligation. 
+        - If multiple dates are mentioned, IGNORE any 기초자산 만기일, underlying maturity date, or reference obligation maturity date.
+        - Only extract the explicitly labeled 만기일, Final Maturity Date, Maturity Date of the Product, or equivalent term clearly referring to this product's own maturity or settlement date.
+        - If in doubt, prefer a date labeled for the product itself, and NOT for any underlying component.
+        - Changing the date in any way or selecting the wrong date type will be considered a CRITICAL ERROR.
+
+        These rules must be followed strictly. Any deviation (such as adding days to dates or modifying numbers) will be considered a critical error.
+        
+        ## text:
+        {{text}}
+
+  # FRN 상품  
+  FRN:
+    - version: "1.0"
+      description: "FRN 상품 json 변환 피드백반영 버전"
+      date: "2025-06-23"
+      template: |
+        You are responsible for extracting issuance information for various financial products from termsheets and converting them into JSON.
+        As a financial expert, read the information converted from the termsheet text and create a JSON file of issuance details for the product using a fixed schema.
+        Terminology may vary across termsheets; as a financial expert, group different terms that have the same meaning into a single standard term.
+        Use the provided JSON schema field names and value formats (including date formats) in the fixed order to extract and populate only the required information.
+
+        Don't Forget:
+
+        (**Output exactly one valid JSON object and nothing else.**
+        Do NOT wrap in markdown fences, do NOT add any explanations, do NOT output any additional characters.)
+
+
+        Below are each field's name of FRN product along with the rules and formats for extracting its value. 
+        Do not modify the given format and output exactly as I have provided.
+
+        ###///###///###///###///###///###///###///###///
+        ▶ 필드별 추출 규칙  
+        - PAYOFF유형: Always "FLR"  
+        - 포지션: Always "B"  
+        - 액면통화: "한화" → "KRW", otherwise use the corresponding three-letter currency code
+        - 액면금액: If 액면통화 is KRW → 10000, for any other 액면통화 → 100
+        - 임의상환옵션유뮤 : There's no option in Vanilla FRN so extract as "NA"
+        - 자동조기상환유무 : There's no option in Vanilla FRN so extract as "NA"
+        - AMORT유무 : There's no option in Vanilla FRN so extract as "NA"
+        - 스위치옵션유무 : There's no option in Vanilla FRN so extract as "NA" 
+        - PERIOD구분: Always 0
+        - 발행일·만기일: Extract the product's issuance and maturity dates directly from the term sheet's context—identify and parse the relevant date lines even if they aren't explicitly labeled as "발행일" or "만기일."
+                       formatted as YYYYMMDD  
+        - BDC: Following→ "F", Modified Following→ "M", Preceding→ "P"
+        - 이자계산주기: None (single-period) → "N", Monthly → "M", Quarterly → "Q", Semi-Annual → "S", Annual → "A"  
+        - 이자지급주기: 1.	If the payment frequency is identical to the calculation frequency (e.g., both "M", "Q", "S", or "A"), always output "C".
+                    2. Only if they differ, use the following codes:
+                        - Monthly → "M", Quarterly → "Q", Semi-Annual → "S", Annual → "A", At maturity → "E"
+        - 이자지급시점: Advance payment → "F", Arrears (after period end) → "R"  
+        - 영업일적용여부: U, A only 2 values are allowed.
+          - Default to "U" in most cases, but output "A" if it appears to be an exception.
+        - 영업일적용도시·FIXING기준적용도시: Seoul → "SE", New York → "NY", London → "LD", etc.
+        - DCC: "A365" → 365 days, "A360" → 360 days, "3360" → 30 days per month, 360 days per year
+                Carefully read the prose in the term sheet and output the correct value among those three options.
+        - 변동금리결정시점: Based on interest-calculation start date → "A", based on calculation end date → "R"  
+        - 결정LAG: The integer value specified in the term sheet  
+        - 승수: The decimal multiplier specified in the term sheet  
+        - 가산금리: The spread specified in the term sheet, converted to a decimal (for example, –0.5% → -0.005)
+                  Please carefully avoid extracting the spread field from phrases that do not include terms like "가산한" or "가산금리", 
+                  such as "최초 이자지급을 위한 금리" or "기준금리인", as these do not indicate the spread.
+          ※ OCR often misrecognizes the percent sign (%) as "9". If the extracted number ends in "9", replace that trailing "9" with "%" before converting.
+        - CAP : caprate
+                  1) Extract the smaller value between the underlying asset and the cap rate.
+                  2) If there is no information available, output "NA."
+        - FLOOR : floorrate
+                  - Default to "NA" in most cases, but output the the larger value between the underlying asset and the floor rate. if it appears to be an exception.
+        ###///###///###///###///###///###///###///###///
+
+        This is the fixed JSON schema you need to produce.
+        Please strictly adhere to this schema and output a standardized JSON file.
+
+        {
+          "PAYOFF유형": "",
+          "포지션": "",
+          "액면통화": "",
+          "액면금액": "",
+          "임의상환옵션유무" : "",
+          "자동조기상환유무" : "",
+          "AMORT유무" : "",
+          "스위치옵션유무" : "",
+          "PERIOD구분": "",
+          "발행일": "",
+          "만기일": "",
+          "BDC": "",
+          "이자계산주기": "",
+          "이자지급주기": "",
+          "이자지급시점": "",
+          "영업일적용여부": "",
+          "영업일적용도시": "",
+          "FIXING기준적용도시": "",
+          "DCC": "",
+          "변동금리결정시점": "",
+          "결정LAG": "",
+          "승수": "",
+          "가산금리": ""
+          "CAP" : "",
+          "FLOOR" : ""
+        }
+
+        Please accurately convert the file I provided into JSON, 
+        based on the field-specific extraction rules I explained and the example showing their application to a real file.
+        Please enclose all field values in double quotes like this when outputting.
+
+        **OUTPUT FORMAT:**
+        You must output a JSON object with the following structure:
+        {
+          "json_result": {
+            // your extracted FRN JSON data here using the schema above
+          },
+          "field_mappings": [
+            {
+              "field_name": "field name from schema",
+              "source_text": "exact text from document that corresponds to this field",
+              "start_position": number,
+              "end_position": number,
+              "confidence": 0.9
+            }
+            // ... for each field
+          ]
+        }
+
+        And ABOVE ALL, You MUST Keep This Rule :
+        Extract only the required values and output this structured JSON with no explanatory text.
+
+        ## text:
+        {{text}}
+
+  # IRS 상품
+  IRS:
+    - version: "1.0"
+      description: "IRS 상품 json 변환 최종 버전"
+      date: "2025-07-02"
+      template: |
+        You are responsible for extracting issuance information for various financial products from termsheets and converting them into JSON.
+        As a financial expert, read the information converted from the termsheet text and create a JSON file of issuance details for the product using a fixed schema.
+        Terminology may vary across termsheets; as a financial expert, group different terms that have the same meaning into a single standard term.
+        This time, you will extract information from an Interest Rate Swap (IRS) product termsheet and convert it into a JSON format.
+        Firstly, I'll explain about IRS product.
+        An Interest Rate Swap (IRS) is a financial derivative contract between two parties who agree to exchange interest rate cash flows, 
+        typically one paying a fixed rate and the other paying a floating rate, 
+        based on a notional principal amount over a specified period and this informations of each IRS contract are appear in one termsheet.
+        Use the provided JSON schema field names and value formats (including date formats) in the fixed order to extract and populate only the required information.
+        In IRS product term sheets, you need to handle one scenario.
+        A single term sheet may include both FIR (Fixed Interest Rate) and FLR (Floating Interest Rate).
+        Below is the JSON schema for IRS products—extract information from the term sheet to match this schema.
+        The example output shown below illustrates the case with FIR and FLR.
+        Study it carefully to understand how to extract data for the FIR + FLR scenario
+        and then accurately extract the information from the term sheet.
+
+        ###///###///###///###///###///###///###///###///
+          "PAYOFF유형"  : "IVS"
+          "포지션"       : "B"
+          "포지션2"     : "P"
+          "액면통화"     : "KRW"
+          "액면금액"     : "10000000000"
+          "발행일"   : "20250519"
+          "만기일"     : "20270928"
+          "BDC"          : "M"
+          "이자지급시점"  : "R"
+          "영업일적용도시"  : "SE"
+          "FIXING기준적용도시" : "SE"
+          "원금교환유무_FIR" : "NA"
+          "원금교환유무_FLR" : "NA"
+          "임의상환옵션유무_FIR" : "NA"
+          "임의상환옵션유무_FLR" : "NA"
+          "자동조기상환유무_FIR" : "NA"
+          "자동조기상환유무_FLR" : "NA"
+          "AMORT유무_FIR" : "NA"
+          "AMORT유무_FLR" : "NA"
+          "스위치옵션유무_FIR" : "NA"
+          "스위치옵션유무_FLR" : "NA"
+          "PERIOD구분_FIR" : "0.0"
+          "PERIOD구분_FLR" : "0.0"
+          "PAYOFF세부유형_CMB_FIR" : "IR"
+          "PAYOFF세부유형_CMB_FLR" : "NA"
+          "구간별시작PERIOD_FIR" : "1.0"
+          "구간별시작PERIOD_FLR" : "1.0"
+          "구간별종료PERIOD_FIR" : "8.0"
+          "구간별종료PERIOD_FLR" : "8.0"
+          "기초자산_FIR"  : "NA"
+          "기초자산_FLR" : "KR13KFM91D"
+          "이자계산주기_FIR" : "Q"
+          "이자계산주기_FLR" : "Q"
+          "이자지급주기_FIR" : "C"
+          "이자지급주기_FLR" : "C"
+          "영업일적용여부_FIR" : "U"
+          "영업일적용여부_FLR" : "U"
+          "고정금리_FIR" : "0.0389"
+          "고정금리_FLR" : "NA"
+          "DCC_FIR" : "A365"
+          "DCC_FLR" : "A365"
+          "기초자산형태_FIR" : "NA"
+          "기초자산형태_FLR" : "V"
+          "변동금리결정시점_FIR" : "NA"
+          "변동금리결정시점_FLR" : "A"
+          "결정LAG_FIR" : "NA"
+          "결정LAG_FLR" : "1.0"
+          "승수_FIR" : "1.0"
+          "승수_FLR" : "1.0"
+          "가산금리_FIR" : "0.0"
+          "가산금리_FLR" : "0.00218"
+        ###///###///###///###///###///###///###///###///
+
+        ###///###///###///###///###///###///###///###///
+
+        ▶ Field-specific Extraction Rules
+        • PAYOFF유형: Since all cases can be entered for the IRS PayoffPattern, users typically input "IRS"
+          And for a Vanilla Swap, enter "IVS"
+          IVS: Vanilla Swap (Floating Rate (FLR) vs Fixed Rate (FIR/IR))
+        • 포지션 : If the entity labeled "To" in the term sheet corresponds to the FIXED RATE PAYER, then it is the seller, so extract "S". In the opposite case, extract it as "B"
+                   This part MUST NOT be extracted as "NA."
+        • 포지션2 : If the entity labeled "To" in the term sheet corresponds to the FIXED RATE PAYER, then it is the receiver, so extract "R". In the opposite case, extract it as "P"
+                   This part MUST NOT be extracted as "NA."
+        • 액면통화 : "한화" → "KRW", otherwise use the corresponding three-letter currency code
+        • 액면금액 : notional amount -> enter only digits like in the example, without commas
+        • 발행일 : Effective date (YYYYMMDD format). Extract exact number of given txt.
+        • 만기일 : maturity date, settlement date (YYYYMMDD format) 
+          -> extract this product's maturity date, not the underlying asset's; do not use the reference obligation's Maturity Date. Extract exact number of given txt.
+        • BDC : Following→ "F", Modified Following→ "M", Preceding→ "P"
+        • 이자지급시점 : Advance payment → "F", Arrears (after period end) → "R"
+        • 영업일적용도시 : Seoul → "SE", New York → "NY", London → "LD", etc.
+        • FIXING기준적용도시 : Seoul → "SE", New York → "NY", London → "LD", etc.
+        • 원금교환유무 : NA: None, IF: Initial and maturity principal exchange, FE: Maturity principal exchange
+            - If the product is a Vanilla IRS, there is no principal exchange; therefore, if the PAYOFF type is IVS, enter "NA".
+        • 임의상환옵션유무 : NA: None, CA: Issuer Call, PU: Investor Put, CP: Call + Put
+            - If the product is a Vanilla IRS, there is no optional redemption feature; therefore, when the PAYOFF type is IVS, enter "NA."      
+        • 자동조기상환유무 : If the product is a Vanilla IRS, there is no automatic early redemption option; therefore, when the PAYOFF type is IVS, enter "NA".
+        • AMORT유무 : NA: None, CA: Amortization by segment
+            - If the product includes an amortization feature, enter "CA"; otherwise, enter "NA."
+        • 스위치옵션유무 : NA: None, CF: Issuer Call, MF: Investor Put
+            - If the product is a Vanilla IRS, there is no switch option; therefore, when the PAYOFF type is IVS, enter "NA".
+        • PERIOD구분 : If the payment rate is identical across all periods: 0, 
+                      If the rates differ by period, use a numbering format like n001.
+            For example:
+              - 1001: periods 1–4: 5%
+              - 2001: periods 5–8: CD 91D + 3%
+        • PAYOFF세부유형_CMB : If it's FIR, use "IR"; if it's FLR use "NA."
+        • 구간별시작PERIOD : Fixed at 1.
+        • 구간별종료PERIOD : Calculate and input the timing of the final interest payment by using the interest payment frequency and the maturity date. 
+          ex) For a 1-year maturity product, since there are four interest payments, input 4.0.
+        • 기초자산 : For the FLR payoff pattern, the IRS underlying asset is fixed to one. For FIR, input "NA"; for FLR input the underlying asset's ISIN code.
+                  If the term sheet shows something like "3 month KRW-CD-3220", enter this part as "KR13KFM91D"
+                  In other words, If the Floating Rate on the term sheet is interpreted as the 3-month CD rate, then always output this field as "KR13KFM91D."
+        • 이자계산주기 : None (single-period) → "N", Monthly → "M", Quarterly → "Q", Semi-Annual → "S", Annual → "A"  
+        • 이자지급주기 : 1.	If the payment frequency is identical to the calculation frequency (e.g., both "M", "Q", "S", or "A"), always output "C".
+                    2. Only if they differ, use the following codes:
+                    - Monthly → "M", Quarterly → "Q", Semi-Annual → "S", Annual → "A", At maturity → "E"
+        • 영업일적용여부 : A: Adjusted, U: Unadjusted
+              ex) when 영업일적용여부's vaule is "A"
+              Business Day Convention : Seoul for Fixing & Payments
+              Non-Business Day Convention : Modified Following 
+
+        • 고정금리 : In cases where a fixed interest rate is paid in specific periods:
+                - For FIR, if a fixed rate applies, enter it in a format like 0.0389.
+                - For FLR and VNL, enter "NA".
+        • DCC : "A365" → 365 days, "A360" → 360 days, "3360" → 30 days per month, 360 days per year
+                Carefully read the prose in the term sheet and output the correct value among those three options.
+        • 기초자산형태 : In a Vanilla IRS, set the value to "V"; for 기초자산형태_FLR input "V"; and for _FIR, input "NA."
+                     So, if the PAYOFF유형 is IVS, enter "V" for 기초자산형태_FLR and "NA" for 기초자산형태_FIR.
+              - V: Vanilla             U1
+              - S: Spread             U1-U2
+              - K: Basket             U1+U2+…+Un
+              - B: Max                Max(U1, U2, … , Un)
+              - W: Min                Min(U1, U2, … , Un)
+              - O: Ratio               U1/U2
+              - C: Change            Final(U1)-Initial(U1)
+              - A: Change(ABS)     ABS( Final(U1)-Initial(U1) )
+        • 변동금리결정시점 : Based on interest-calculation start date → "A", based on calculation end date → "R"  
+                - For FIR, enter "NA"; for FLR and VNL, enter values according to the extraction rules above.
+        • 결정LAG : The integer value specified in the term sheet
+                - For FIR, enter "NA"; for FLR and VNL, enter values according to the extraction rules above.
+                - This part MUST NOT be extracted as "NA."
+                - If no value is specified in the term sheet, simply output 0.
+        • 승수 : The decimal multiplier specified in the term sheet
+                - For FIR, enter "NA"; for FLR and VNL, enter values according to the extraction rules above.
+                - This part MUST NOT be extracted as "NA." 
+                - If no value is specified in the term sheet, simply output 0.
+        • 가산금리 : The spread specified in the term sheet, converted to a decimal (for example, 0.218% → 0.00218)
+                - For FIR, enter "NA"; for FLR and VNL, enter values according to the extraction rules above.
+                - This part MUST NOT be extracted as "NA."
+                - If no value is specified in the term sheet, simply output 0.
+
+        ###///###///###///###///###///###///###///###///
+
+        Use the attached text to find and populate the values, not to copy the example values.
+        This requires very high accuracy; read and understand the text as a financial expert and fill in the values meticulously.
+        All fields must be filled and values must be enclosed in quotes, without exception.
+        
+        **OUTPUT FORMAT:**
+        You must output a JSON object with the following structure:
+        {
+          "json_result": {
+            // your extracted IRS JSON data here using the schema above
+          },
+          "field_mappings": [
+            {
+              "field_name": "field name from schema",
+              "source_text": "exact text from document that corresponds to this field",
+              "start_position": number,
+              "end_position": number,
+              "confidence": 0.9
+            }
+            // ... for each field
+          ]
+        }
+        Extract only the required values and output this structured JSON with no explanatory text.
+
+        IMPORTANT RULES:
+        
+        1. Do not ever output "NA" for the _FLR columns of 기초자산형태, 결정LAG, 승수, 가산금리.
+
+        2. For date fields such as 발행일 and 만기일:
+
+        - Extract the exact date string as written in the text.
+        - Do not add or subtract any days. Do not apply settlement conventions (such as T+1 or T+2). Simply copy the date shown in the text without adjustment.
+        - Only extract the explicitly labeled 만기일, Final Maturity Date, Maturity Date of the Product, or equivalent term clearly referring to this product's own maturity or settlement date.
+        - If in doubt, prefer a date labeled for the product itself, and NOT for any underlying component.
+        - Changing the date in any way or selecting the wrong date type will be considered a CRITICAL ERROR.
+
+        These rules must be followed strictly. Any deviation (such as adding days to dates or modifying numbers) will be considered a critical error.
+        
+        ## text:
+        {{text}}

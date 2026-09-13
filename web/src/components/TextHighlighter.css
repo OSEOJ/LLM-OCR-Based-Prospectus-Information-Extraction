@@ -1,0 +1,193 @@
+/* TextHighlighter 컴포넌트 스타일 */
+
+.text-highlighter-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.text-highlighter-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.text-highlighter-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.highlight-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #666;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid #ccc;
+}
+
+.highlight-sample {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.selected-sample {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.text-highlighter-content {
+  padding: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.highlighted-text {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.text-content {
+  /* 일반 텍스트 스타일 */
+}
+
+/* text-highlight 클래스 완전 제거 - 인라인 스타일만 사용 */
+
+.empty-text-message {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.mapping-summary {
+  border-top: 1px solid #e9ecef;
+  padding: 16px;
+  background: #f8f9fa;
+}
+
+.mapping-summary h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.mapping-list {
+  display: grid;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mapping-item {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.mapping-item:hover {
+  border-color: #007bff;
+  background-color: #f8f9ff;
+}
+
+.mapping-item.active {
+  border-color: #007bff;
+  background-color: #e7f3ff;
+  border-width: 2px;
+}
+
+.mapping-field {
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+}
+
+.mapping-value {
+  color: #666;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mapping-confidence {
+  font-size: 11px;
+  color: #888;
+  text-align: right;
+}
+
+/* 스크롤바 스타일링 */
+.text-highlighter-content::-webkit-scrollbar,
+.mapping-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.text-highlighter-content::-webkit-scrollbar-track,
+.mapping-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.text-highlighter-content::-webkit-scrollbar-thumb,
+.mapping-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.text-highlighter-content::-webkit-scrollbar-thumb:hover,
+.mapping-list::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .text-highlighter-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .highlight-legend {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .mapping-item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  
+  .mapping-confidence {
+    text-align: left;
+  }
+}

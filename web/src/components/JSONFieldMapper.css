@@ -1,0 +1,379 @@
+/* JSONFieldMapper 컴포넌트 스타일 */
+
+.json-field-mapper-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.json-field-mapper-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.json-field-mapper-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.validation-summary {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.validation-count {
+  color: #666;
+}
+
+.validation-valid {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.validation-invalid {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.json-fields-list {
+  max-height: 700px;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.json-field-item {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: white;
+}
+
+.json-field-item:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.1);
+}
+
+.json-field-item.selected {
+  border-color: #007bff;
+  background-color: #f8f9ff;
+  border-width: 2px;
+}
+
+.json-field-item.has-mapping {
+  border-left: 4px solid #28a745;
+}
+
+.field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.field-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-path {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.field-type {
+  font-size: 12px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.field-confidence {
+  display: flex;
+  align-items: center;
+}
+
+.confidence-badge {
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 12px;
+  min-width: 35px;
+  text-align: center;
+}
+
+.field-value-section {
+  margin-bottom: 12px;
+}
+
+.field-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.value-text {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #333;
+  word-break: break-all;
+}
+
+.btn-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-edit:hover {
+  background-color: #e9ecef;
+}
+
+.field-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-edit-input {
+  padding: 8px 12px;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  outline: none;
+}
+
+.field-edit-input:focus {
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.field-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-save, .btn-cancel {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-save {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-save:hover {
+  background-color: #218838;
+}
+
+.btn-cancel {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background-color: #5a6268;
+}
+
+.field-mapping-info {
+  background: #f0f8ff;
+  border: 1px solid #b8daff;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.mapping-source {
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.mapping-position {
+  color: #666;
+  font-size: 11px;
+}
+
+.field-validation {
+  border-top: 1px solid #e9ecef;
+  padding-top: 12px;
+}
+
+.validation-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.validation-btn {
+  padding: 6px 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.validation-btn:hover {
+  border-color: #007bff;
+}
+
+.validation-btn.valid {
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.validation-btn.valid.active {
+  background-color: #28a745;
+  color: white;
+}
+
+.validation-btn.invalid {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.validation-btn.invalid.active {
+  background-color: #dc3545;
+  color: white;
+}
+
+.validation-btn.comment {
+  border-color: #ffc107;
+  color: #ffc107;
+}
+
+.validation-btn.comment:hover {
+  background-color: #ffc107;
+  color: white;
+}
+
+.validation-comment {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 12px;
+  color: #856404;
+}
+
+.mapping-statistics {
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  padding: 16px;
+}
+
+.mapping-statistics h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #007bff;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.empty-json-message {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+/* 스크롤바 스타일링 */
+.json-fields-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.json-fields-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.json-fields-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.json-fields-list::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .json-field-mapper-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .validation-summary {
+    flex-wrap: wrap;
+  }
+  
+  .field-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .validation-buttons {
+    flex-direction: column;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
