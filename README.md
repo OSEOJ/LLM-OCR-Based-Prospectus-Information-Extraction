@@ -72,18 +72,6 @@ Tesseract · PaddleOCR · EasyOCR을 같은 텀시트로 비교했습니다
 `(0,0) (0,1) (1,0) (1,1)` 순으로 정렬하는 방식으로 바꿨습니다. 스캔 문서는 기울어져 있어
 수직선 감지가 자주 실패했고, 기울기 보정을 넣어 해결했습니다.
 
-### LLM
-
-비용 때문에 오픈소스 모델로 시작했지만, 실행 시간에서 갈렸습니다. (입력 37,353 토큰 기준)
-
-| 환경 | 모델 | 소요 시간 |
-|---|---|---|
-| 로컬 MacBook M3 Air | Llama-7B-chat | 4시간 이상 |
-| Google Colab T4 | Llama-7B-chat | 약 23분 |
-| **OpenAI API** | GPT-3.5-turbo | **약 2분** |
-
-이후 API 모델 안에서 비교해 **GPT-4.1-mini**로 확정했습니다.
-
 ### 프롬프트 엔지니어링
 
 Role Prompting · Few-shot · Chain-of-Thought를 함께 썼습니다. **프롬프트를 한국어에서
